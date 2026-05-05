@@ -1,11 +1,37 @@
 const TradeJournal = require("../models/TradeJournal");
+const Account = require("../models/Account");
 const path = require("path");
 const fs = require("fs");
+
+async function getAccountFilter(req) {
+  const accountId = req.query.account && req.query.account !== "all" ? req.query.account : null;
+
+  if (!accountId) {
+    return null;
+  }
+
+  const account = await Account.findOne({ _id: accountId, user: req.user._id });
+  if (!account) {
+    return { error: true };
+  }
+
+  return account._id;
+}
 
 // GET /api/journal — all entries for current user (newest first)
 exports.getEntries = async (req, res) => {
   try {
-    const entries = await TradeJournal.find({ user: req.user._id }).sort({ date: -1 });
+    const accountFilter = await getAccountFilter(req);
+    if (accountFilter && accountFilter.error) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const query = { user: req.user._id };
+    if (accountFilter) {
+      query.account = accountFilter;
+    }
+
+    const entries = await TradeJournal.find(query).populate("account").sort({ date: -1 });
     res.json(entries);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -15,7 +41,17 @@ exports.getEntries = async (req, res) => {
 // GET /api/journal/stats — computed stats for current user
 exports.getStats = async (req, res) => {
   try {
-    const entries = await TradeJournal.find({ user: req.user._id });
+    const accountFilter = await getAccountFilter(req);
+    if (accountFilter && accountFilter.error) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const query = { user: req.user._id };
+    if (accountFilter) {
+      query.account = accountFilter;
+    }
+
+    const entries = await TradeJournal.find(query);
 
     if (entries.length === 0) {
       return res.json({
@@ -109,7 +145,7 @@ exports.getStats = async (req, res) => {
 // GET /api/journal/:id — single entry
 exports.getEntry = async (req, res) => {
   try {
-    const entry = await TradeJournal.findOne({ _id: req.params.id, user: req.user._id });
+    const entry = await TradeJournal.findOne({ _id: req.params.id, user: req.user._id }).populate("account");
     if (!entry) return res.status(404).json({ message: "Entry not found" });
     res.json(entry);
   } catch (err) {
@@ -121,15 +157,24 @@ exports.getEntry = async (req, res) => {
 exports.createEntry = async (req, res) => {
   try {
     const {
-      date, instrument, pnl, trades,
+      date, instrument, pnl, trades, account,
       entryReason, description, mistakesOrMissed, lessons,
       followedPlan, mood, riskReward,
     } = req.body;
+
+    const accountId = account && account !== "all" ? account : null;
+    if (accountId) {
+      const accountExists = await Account.findOne({ _id: accountId, user: req.user._id });
+      if (!accountExists) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+    }
 
     const screenshots = req.files ? req.files.map((f) => f.filename) : [];
 
     const entry = new TradeJournal({
       user: req.user._id,
+      account: accountId,
       date: date || new Date(),
       instrument: instrument || "ES",
       pnl: parseFloat(pnl) || 0,
@@ -163,6 +208,17 @@ exports.updateEntry = async (req, res) => {
     const textFields = ["date", "instrument", "entryReason", "description", "mistakesOrMissed", "lessons", "mood"];
     for (const f of textFields) {
       if (req.body[f] !== undefined) entry[f] = req.body[f];
+    }
+    if (req.body.account !== undefined) {
+      if (!req.body.account || req.body.account === "all") {
+        entry.account = null;
+      } else {
+        const accountExists = await Account.findOne({ _id: req.body.account, user: req.user._id });
+        if (!accountExists) {
+          return res.status(404).json({ message: "Account not found" });
+        }
+        entry.account = accountExists._id;
+      }
     }
     if (req.body.pnl !== undefined) entry.pnl = parseFloat(req.body.pnl);
     if (req.body.riskReward !== undefined) {

@@ -63,6 +63,7 @@ export default function JournalEntry() {
   const [form, setForm] = useState({});
   const [newScreenshots, setNewScreenshots] = useState([]);
   const [newPreviews, setNewPreviews] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
@@ -74,6 +75,7 @@ export default function JournalEntry() {
       .then(({ data }) => {
         setEntry(data);
         setForm({
+          account: data.account?._id || data.account || "",
           date: new Date(data.date).toISOString().split("T")[0],
           instrument: INSTRUMENTS.includes(data.instrument) ? data.instrument : "Other",
           customInstrument: INSTRUMENTS.includes(data.instrument) ? "" : data.instrument,
@@ -88,6 +90,11 @@ export default function JournalEntry() {
         });
       })
       .catch(() => navigate("/journal"));
+
+    axios
+      .get(`${API_BASE_URL}/api/accounts`, { headers })
+      .then(({ data }) => setAccounts(data.accounts || []))
+      .catch(() => setAccounts([]));
   }, [id]);
 
   const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
@@ -157,6 +164,7 @@ export default function JournalEntry() {
     const instrument = form.instrument === "Other" ? form.customInstrument.trim() : form.instrument;
 
     const formData = new FormData();
+    formData.append("account", form.account || "");
     formData.append("date", form.date);
     formData.append("instrument", instrument || "ES");
     formData.append("pnl", form.pnl);
@@ -206,6 +214,7 @@ export default function JournalEntry() {
     // Reset form to entry values
     if (entry) {
       setForm({
+        account: entry.account?._id || entry.account || "",
         date: new Date(entry.date).toISOString().split("T")[0],
         instrument: INSTRUMENTS.includes(entry.instrument) ? entry.instrument : "Other",
         customInstrument: INSTRUMENTS.includes(entry.instrument) ? "" : entry.instrument,
@@ -268,6 +277,7 @@ export default function JournalEntry() {
         <div className="flex items-start justify-between">
           <div>
             <Link to="/journal" className="text-[color:var(--app-primary)] hover:opacity-80 text-sm">
+              {entry.account?.name && <span className="app-badge app-badge-neutral">{entry.account.name}</span>}
               ← Journal
             </Link>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -366,7 +376,7 @@ export default function JournalEntry() {
           </div>
         ) : (
           <div className="bg-gray-900 rounded-xl p-5 border border-gray-800 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <FormField label="Date">
                 <input
                   type="date"
@@ -395,6 +405,20 @@ export default function JournalEntry() {
                     placeholder="Custom instrument..."
                   />
                 )}
+              </FormField>
+              <FormField label="Account">
+                <select
+                  value={form.account}
+                  onChange={(e) => set("account", e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">No account</option>
+                  {accounts.map((account) => (
+                    <option key={account._id} value={account._id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
               </FormField>
               <FormField label="Day P&L ($)">
                 <input

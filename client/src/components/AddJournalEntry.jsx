@@ -140,6 +140,7 @@ export default function AddJournalEntry() {
   const todayStr = new Date().toISOString().split("T")[0];
 
   const [form, setForm] = useState({
+    account: "",
     date: todayStr,
     instrument: "ES",
     customInstrument: "",
@@ -155,10 +156,28 @@ export default function AddJournalEntry() {
   const [trades, setTrades] = useState([]);
   const [screenshots, setScreenshots] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const set = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
+
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE_URL}/api/accounts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAccounts(data.accounts || []);
+        const defaultAccount = data.defaultAccountId || data.accounts?.[0]?._id || "";
+        setForm((prev) => ({ ...prev, account: prev.account || defaultAccount }));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadAccounts();
+  }, [token]);
 
   const addScreenshotFiles = (files) => {
     setScreenshots((prevScreenshots) => {
@@ -235,6 +254,7 @@ export default function AddJournalEntry() {
 
     const formData = new FormData();
     formData.append("date", form.date);
+    formData.append("account", form.account || "");
     formData.append("instrument", instrument || "ES");
     formData.append("pnl", form.pnl || "0");
     formData.append("riskReward", form.riskReward);
@@ -284,7 +304,7 @@ export default function AddJournalEntry() {
         )}
 
         {/* Date / Instrument / P&L / Risk:Reward */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <FormField label="Trading Date">
             <input
               type="date"
@@ -339,6 +359,21 @@ export default function AddJournalEntry() {
               className="app-input"
               placeholder="2.00"
             />
+          </FormField>
+
+          <FormField label="Account">
+            <select
+              value={form.account}
+              onChange={(e) => set("account", e.target.value)}
+              className="app-input"
+            >
+              <option value="">Select account</option>
+              {accounts.map((account) => (
+                <option key={account._id} value={account._id}>
+                  {account.name}
+                </option>
+              ))}
+            </select>
           </FormField>
         </div>
 

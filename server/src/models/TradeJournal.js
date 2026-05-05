@@ -18,6 +18,11 @@ const tradeJournalSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      default: null,
+    },
     date: { type: Date, required: true },
     instrument: { type: String, default: "ES" },
     pnl: { type: Number, required: true, default: 0 },

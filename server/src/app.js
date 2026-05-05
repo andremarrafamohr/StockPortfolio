@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 const authRoutes = require("./routes/authRoutes");
+const accountRoutes = require("./routes/accountRoutes");
 const journalRoutes = require("./routes/journalRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
 
@@ -35,6 +36,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/accounts", accountRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 
