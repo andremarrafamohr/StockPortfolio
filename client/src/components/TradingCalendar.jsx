@@ -57,13 +57,13 @@ export default function TradingCalendar({ entries }) {
   };
 
   return (
-    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+    <div className="app-card p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Calendar</p>
+          <p className="app-section-title">Calendar</p>
           <div className="flex items-center gap-3 mt-1">
-            <h3 className="text-white font-semibold">
+            <h3 className="text-[color:var(--app-text)] font-semibold">
               {MONTH_NAMES[month]} {year}
             </h3>
             {monthEntries.length > 0 && (
@@ -71,7 +71,7 @@ export default function TradingCalendar({ entries }) {
                 <span className={`text-sm font-bold ${monthPnl >= 0 ? "text-green-400" : "text-red-400"}`}>
                   {monthPnl >= 0 ? "+" : ""}${Math.abs(monthPnl).toFixed(2)}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[color:var(--app-text-soft)]">
                   {monthWins}W · {monthLosses}L
                 </span>
               </>
@@ -81,19 +81,19 @@ export default function TradingCalendar({ entries }) {
         <div className="flex items-center gap-1">
           <button
             onClick={prevMonth}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors text-xl leading-none"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--app-text-muted)] hover:bg-[color:var(--app-surface-soft)] transition-colors text-xl leading-none"
           >
             ‹
           </button>
           <button
             onClick={goToday}
-            className="px-2.5 h-8 text-xs text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+            className="px-2.5 h-8 text-xs text-[color:var(--app-text-muted)] hover:bg-[color:var(--app-surface-soft)] rounded-lg transition-colors"
           >
             Today
           </button>
           <button
             onClick={nextMonth}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors text-xl leading-none"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--app-text-muted)] hover:bg-[color:var(--app-surface-soft)] transition-colors text-xl leading-none"
           >
             ›
           </button>
@@ -103,7 +103,7 @@ export default function TradingCalendar({ entries }) {
       {/* Day name headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {DAY_NAMES.map((d) => (
-          <div key={d} className="text-center text-xs text-gray-600 font-medium py-1">
+          <div key={d} className="text-center text-xs text-[color:var(--app-text-soft)] font-medium py-1">
             {d}
           </div>
         ))}
@@ -124,25 +124,25 @@ export default function TradingCalendar({ entries }) {
 
           if (entry) {
             if (entry.pnl > 0) {
-              bg = "bg-green-950";
-              border = "border-green-800 hover:border-green-500";
+              bg = "bg-green-500/10";
+              border = "border-green-500/25 hover:border-green-500/60";
               dayNumColor = "text-green-300";
               pnlColor = "text-green-400";
             } else if (entry.pnl < 0) {
-              bg = "bg-red-950";
-              border = "border-red-800 hover:border-red-500";
+              bg = "bg-red-500/10";
+              border = "border-red-500/25 hover:border-red-500/60";
               dayNumColor = "text-red-300";
               pnlColor = "text-red-400";
             } else {
-              bg = "bg-gray-800";
-              border = "border-gray-700 hover:border-gray-500";
-              dayNumColor = "text-gray-300";
-              pnlColor = "text-gray-400";
+              bg = "bg-[color:var(--app-surface-soft)]";
+              border = "border-[color:var(--app-border)] hover:border-[color:var(--app-primary)]/35";
+              dayNumColor = "text-[color:var(--app-text)]";
+              pnlColor = "text-[color:var(--app-text-soft)]";
             }
           } else {
-            bg = isWeekend ? "bg-gray-900 opacity-40" : "bg-gray-900";
-            border = "border-gray-800";
-            dayNumColor = isToday ? "text-blue-400 font-bold" : "text-gray-600";
+            bg = isWeekend ? "bg-[color:var(--app-surface-soft)] opacity-40" : "bg-[color:var(--app-surface-soft)]";
+            border = "border-[color:var(--app-border)]";
+            dayNumColor = isToday ? "text-[color:var(--app-primary)] font-bold" : "text-[color:var(--app-text-soft)]";
             pnlColor = "";
           }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import TradingCalendar from "./TradingCalendar";
+import ThemeToggle from "./ThemeToggle";
 import { API_BASE_URL } from "../config/api";
 
 const moodEmoji = {
@@ -66,10 +67,10 @@ function PnlChart({ entries }) {
 
 function StatCard({ label, value, sub, colorClass }) {
   return (
-    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <div className="app-card-soft p-4">
+      <p className="text-xs uppercase tracking-wider text-[color:var(--app-text-soft)] mb-1">{label}</p>
       <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
-      <p className="text-gray-600 text-xs mt-1">{sub}</p>
+      <p className="text-[color:var(--app-text-soft)] text-xs mt-1">{sub}</p>
     </div>
   );
 }
@@ -115,29 +116,30 @@ export default function Journal() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-400 text-lg animate-pulse">Loading...</div>
+      <div className="app-shell flex items-center justify-center">
+        <div className="text-[color:var(--app-text-muted)] text-lg animate-pulse">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+    <div className="app-shell text-[color:var(--app-text)]">
+      <header className="app-header sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Trading Journal</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Manual Session Logging</p>
+          <h1 className="text-xl font-bold text-[color:var(--app-text)]">Trading Journal</h1>
+          <p className="text-xs text-[color:var(--app-text-muted)] mt-0.5">Manual Session Logging</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link
             to="/journal/new"
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            className="app-button-primary text-sm font-semibold px-4 py-2"
           >
             + New Session
           </Link>
           <button
             onClick={handleLogout}
-            className="text-gray-400 hover:text-white text-sm px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+            className="app-button-secondary text-sm px-3 py-2"
           >
             Logout
           </button>
@@ -239,19 +241,19 @@ export default function Journal() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+              <div className="app-card p-4">
                 <p className="text-xs text-gray-500 mb-1">Best Day</p>
                 <p className="text-green-400 text-2xl font-bold">+${stats.bestDay.pnl.toFixed(2)}</p>
-                <p className="text-gray-500 text-xs mt-1">
+                <p className="text-[color:var(--app-text-soft)] text-xs mt-1">
                   {new Date(stats.bestDay.date).toLocaleDateString("en-US", {
                     weekday: "short", month: "short", day: "numeric", year: "numeric",
                   })}
                 </p>
               </div>
-              <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+              <div className="app-card p-4">
                 <p className="text-xs text-gray-500 mb-1">Worst Day</p>
                 <p className="text-red-400 text-2xl font-bold">${stats.worstDay.pnl.toFixed(2)}</p>
-                <p className="text-gray-500 text-xs mt-1">
+                <p className="text-[color:var(--app-text-soft)] text-xs mt-1">
                   {new Date(stats.worstDay.date).toLocaleDateString("en-US", {
                     weekday: "short", month: "short", day: "numeric", year: "numeric",
                   })}
@@ -260,8 +262,8 @@ export default function Journal() {
             </div>
 
             {entries.length > 1 && (
-              <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+              <div className="app-card p-5">
+                <h2 className="app-section-title mb-4">
                   Cumulative P&L
                 </h2>
                 <PnlChart entries={entries} />
@@ -274,7 +276,7 @@ export default function Journal() {
 
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <h2 className="app-section-title">
               Trading Sessions ({filteredEntries.length}{filteredEntries.length !== entries.length ? ` of ${entries.length}` : ""})
             </h2>
 
@@ -328,7 +330,7 @@ export default function Journal() {
                   <select
                     value={filterInstrument}
                     onChange={(e) => setFilterInstrument(e.target.value)}
-                    className="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                    className="app-input text-xs py-2 px-3"
                   >
                     <option value="all">All Instruments</option>
                     {instruments.map((inst) => (
@@ -341,29 +343,29 @@ export default function Journal() {
           </div>
 
           {entries.length === 0 ? (
-            <div className="bg-gray-900 rounded-xl p-16 border border-gray-800 text-center">
+            <div className="app-empty p-16 text-center">
               <p className="text-5xl mb-4">📈</p>
-              <p className="text-gray-300 text-lg font-medium mb-2">No sessions yet</p>
-              <p className="text-gray-600 text-sm mb-8">
+              <p className="text-[color:var(--app-text)] text-lg font-medium mb-2">No sessions yet</p>
+              <p className="text-[color:var(--app-text-soft)] text-sm mb-8">
                 Start logging your sessions to track performance
               </p>
               <Link
                 to="/journal/new"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
+                className="app-button-primary text-sm font-semibold px-6 py-3"
               >
                 Log First Session
               </Link>
             </div>
           ) : filteredEntries.length === 0 ? (
-            <div className="bg-gray-900 rounded-xl p-10 border border-gray-800 text-center">
-              <p className="text-gray-500 text-sm">No sessions match the current filters.</p>
+            <div className="app-empty p-10 text-center">
+              <p className="text-[color:var(--app-text-muted)] text-sm">No sessions match the current filters.</p>
               <button
                 onClick={() => {
                   setFilterResult("all");
                   setFilterInstrument("all");
                   setFilterMarket("all");
                 }}
-                className="mt-3 text-blue-400 hover:text-blue-300 text-xs underline"
+                className="mt-3 text-[color:var(--app-primary)] hover:opacity-80 text-xs underline"
               >
                 Clear filters
               </button>
@@ -374,7 +376,7 @@ export default function Journal() {
                 <Link
                   key={entry._id}
                   to={`/journal/${entry._id}`}
-                  className="block bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-gray-600 transition-all"
+                  className="block app-card p-5 transition-all hover:border-[color:var(--app-primary)]/40"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4 min-w-0">
@@ -388,44 +390,44 @@ export default function Journal() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap text-sm">
                           <span className="font-semibold text-white">{entry.instrument}</span>
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-800 text-gray-300">
+                          <span className="app-badge app-badge-neutral">
                             {marketLabel(getMarketGroup(entry.instrument))}
                           </span>
-                          <span className="text-gray-600">·</span>
-                          <span className="text-gray-400">
+                          <span className="text-[color:var(--app-text-soft)]">·</span>
+                          <span className="text-[color:var(--app-text-muted)]">
                             {new Date(entry.date).toLocaleDateString("en-US", {
                               weekday: "short", month: "short", day: "numeric", year: "numeric",
                             })}
                           </span>
                           {entry.mood && <span className="text-base">{moodEmoji[entry.mood]}</span>}
-                          {entry.followedPlan === true && <span className="text-xs text-green-600">✓ plan</span>}
-                          {entry.followedPlan === false && <span className="text-xs text-red-600">✗ plan</span>}
+                          {entry.followedPlan === true && <span className="app-badge app-badge-success">✓ plan</span>}
+                          {entry.followedPlan === false && <span className="app-badge app-badge-danger">✗ plan</span>}
                           {entry.riskReward !== null && entry.riskReward !== undefined && (
-                            <span className="text-xs text-blue-500">R:R 1:{Number(entry.riskReward).toFixed(2)}</span>
+                            <span className="app-badge app-badge-primary">R:R 1:{Number(entry.riskReward).toFixed(2)}</span>
                           )}
                         </div>
                         {entry.description && (
-                          <p className="text-gray-500 text-xs mt-1 truncate">{entry.description}</p>
+                          <p className="text-[color:var(--app-text-soft)] text-xs mt-1 truncate">{entry.description}</p>
                         )}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
                       {entry.trades.length > 0 && (
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-[color:var(--app-text-soft)]">
                           {entry.trades.length} trade{entry.trades.length !== 1 ? "s" : ""}
                         </span>
                       )}
                       {entry.screenshots.length > 0 && (
-                        <span className="text-xs text-gray-600">📷 {entry.screenshots.length}</span>
+                        <span className="text-xs text-[color:var(--app-text-soft)]">📷 {entry.screenshots.length}</span>
                       )}
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                           entry.pnl > 0
-                            ? "bg-green-950 text-green-400"
+                            ? "app-badge app-badge-success"
                             : entry.pnl < 0
-                            ? "bg-red-950 text-red-400"
-                            : "bg-gray-800 text-gray-400"
+                            ? "app-badge app-badge-danger"
+                            : "app-badge app-badge-neutral"
                         }`}
                       >
                         {entry.pnl > 0 ? "WIN" : entry.pnl < 0 ? "LOSS" : "FLAT"}

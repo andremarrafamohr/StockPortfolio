@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import ThemeToggle from "./ThemeToggle";
 
 function getRegisterWarning(error) {
   if (!error.response) {
@@ -64,73 +65,76 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <div className="app-page flex items-center justify-center px-4 py-10">
+      <div className="fixed top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Trading Journal</h1>
-          <p className="text-gray-500 text-sm mt-2">Create your account</p>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[color:var(--app-surface)] border border-[color:var(--app-border)] mb-4 shadow-lg">
+            <span className="text-2xl">✨</span>
+          </div>
+          <h1 className="text-3xl font-bold text-[color:var(--app-text)]">Trading Journal</h1>
+          <p className="text-[color:var(--app-text-muted)] text-sm mt-2">Create your account</p>
         </div>
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-900 rounded-2xl p-8 border border-gray-800 space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="app-auth-card space-y-4 p-8">
           {error && (
-            <div className="bg-red-950 border border-red-800 text-red-300 px-4 py-3 rounded-lg text-sm">
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 px-4 py-3 text-sm">
               {error}
             </div>
           )}
           {warning && (
-            <div className="bg-amber-950 border border-amber-800 text-amber-200 px-4 py-3 rounded-lg text-sm">
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-900 px-4 py-3 text-sm">
               {warning}
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
+            <label className="app-label">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="app-input text-sm"
               placeholder="Your name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+            <label className="app-label">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="app-input text-sm"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+            <label className="app-label">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+              className="app-input text-sm"
               placeholder="Min 6 characters"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors mt-2"
+            className="app-button-primary w-full font-semibold py-3 mt-2 disabled:opacity-50"
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>
-          <p className="text-center text-gray-600 text-xs">
+          <p className="text-center text-[color:var(--app-text-soft)] text-xs">
             Backend expected at {API_BASE_URL}
           </p>
-          <p className="text-center text-gray-600 text-sm pt-2">
+          <p className="text-center text-[color:var(--app-text-muted)] text-sm pt-2">
             Already have an account?{" "}
-            <Link to="/login" className="text-blue-500 hover:text-blue-400">
+            <Link to="/login" className="text-[color:var(--app-primary)] hover:opacity-80">
               Sign in
             </Link>
           </p>

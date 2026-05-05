@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import ThemeToggle from "./ThemeToggle";
 
 const INSTRUMENTS = ["ES", "NQ", "YM", "RTY", "CL", "GC", "6E", "ZB", "Other"];
 const MOODS = [
@@ -20,13 +21,12 @@ function getMarketLabel(instrument = "") {
   return "Other";
 }
 
-const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-blue-500 transition-colors";
+const inputClass = "app-input text-sm";
 
 function FormField({ label, children }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
+      <label className="app-label">{label}</label>
       {children}
     </div>
   );
@@ -34,8 +34,8 @@ function FormField({ label, children }) {
 
 function Section({ label, value, editing, formValue, onChange, placeholder }) {
   return (
-    <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{label}</h2>
+    <div className="app-card p-5">
+      <h2 className="app-section-title mb-3">{label}</h2>
       {editing ? (
         <textarea
           value={formValue}
@@ -44,8 +44,8 @@ function Section({ label, value, editing, formValue, onChange, placeholder }) {
           placeholder={placeholder}
         />
       ) : (
-        <p className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
-          {value ? value : <span className="text-gray-700 italic">No notes recorded</span>}
+        <p className="text-[color:var(--app-text)] text-sm whitespace-pre-wrap leading-relaxed">
+          {value ? value : <span className="text-[color:var(--app-text-soft)] italic">No notes recorded</span>}
         </p>
       )}
     </div>
@@ -92,13 +92,52 @@ export default function JournalEntry() {
 
   const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
 
-  const handleNewScreenshots = (e) => {
-    const files = Array.from(e.target.files);
-    const remaining = 5 - (entry?.screenshots.length || 0) - newScreenshots.length;
-    const toAdd = files.slice(0, remaining);
-    setNewScreenshots((prev) => [...prev, ...toAdd]);
-    setNewPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+  const addNewScreenshotFiles = (files) => {
+    setNewScreenshots((prevScreenshots) => {
+      const remaining = 5 - (entry?.screenshots.length || 0) - prevScreenshots.length;
+      const toAdd = files.slice(0, remaining);
+
+      if (toAdd.length > 0) {
+        setNewPreviews((prevPreviews) => [
+          ...prevPreviews,
+          ...toAdd.map((file) => URL.createObjectURL(file)),
+        ]);
+      }
+
+      return [...prevScreenshots, ...toAdd];
+    });
   };
+
+  const handleNewScreenshots = (e) => {
+    addNewScreenshotFiles(Array.from(e.target.files));
+    e.target.value = "";
+  };
+
+  useEffect(() => {
+    if (!editing) return undefined;
+
+    const handlePaste = (event) => {
+      const pastedFiles = Array.from(event.clipboardData?.items || [])
+        .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter(Boolean);
+
+      if (pastedFiles.length === 0) return;
+
+      event.preventDefault();
+      addNewScreenshotFiles(pastedFiles);
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [editing, entry?.screenshots.length]);
+
+  useEffect(
+    () => () => {
+      newPreviews.forEach((url) => URL.revokeObjectURL(url));
+    },
+    [newPreviews]
+  );
 
   const handleDeleteScreenshot = async (filename) => {
     try {
@@ -184,8 +223,8 @@ export default function JournalEntry() {
 
   if (!entry) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-400 animate-pulse">Loading...</div>
+      <div className="app-shell flex items-center justify-center">
+        <div className="text-[color:var(--app-text-muted)] animate-pulse">Loading...</div>
       </div>
     );
   }
@@ -203,7 +242,7 @@ export default function JournalEntry() {
     editPnlNum > 0 ? "text-green-400" : editPnlNum < 0 ? "text-red-400" : "text-white";
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="app-shell text-[color:var(--app-text)]">
       {/* Lightbox */}
       {lightbox && (
         <div
@@ -225,35 +264,36 @@ export default function JournalEntry() {
       )}
 
       {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 sticky top-0 z-10">
+      <header className="app-header px-6 py-4 sticky top-0 z-10">
         <div className="flex items-start justify-between">
           <div>
-            <Link to="/journal" className="text-blue-500 hover:text-blue-400 text-sm">
+            <Link to="/journal" className="text-[color:var(--app-primary)] hover:opacity-80 text-sm">
               ← Journal
             </Link>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <h1 className="text-xl font-bold text-white">{dateStr}</h1>
-              <span className="text-gray-600">·</span>
-              <span className="text-gray-400 font-medium">{entry.instrument}</span>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-800 text-gray-300">
+              <h1 className="text-xl font-bold text-[color:var(--app-text)]">{dateStr}</h1>
+              <span className="text-[color:var(--app-text-soft)]">·</span>
+              <span className="text-[color:var(--app-text-muted)] font-medium">{entry.instrument}</span>
+              <span className="app-badge app-badge-neutral">
                 {getMarketLabel(entry.instrument)}
               </span>
               {entry.mood && <span className="text-xl">{moodEmoji[entry.mood]}</span>}
             </div>
           </div>
-          <div className="flex gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1">
+            <ThemeToggle />
             {!editing ? (
               <>
                 <button
                   onClick={() => setEditing(true)}
-                  className="text-sm px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+                  className="app-button-secondary text-sm px-4 py-2"
                 >
                   Edit
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="text-sm px-4 py-2 rounded-lg border border-red-900 text-red-500 hover:bg-red-950 disabled:opacity-50 transition-colors"
+                  className="text-sm px-4 py-2 rounded-lg border border-red-500/30 text-red-500 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
                 >
                   {deleting ? "Deleting..." : "Delete"}
                 </button>
@@ -263,13 +303,13 @@ export default function JournalEntry() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="text-sm px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium transition-colors"
+                  className="app-button-primary text-sm px-4 py-2 disabled:opacity-50 text-white font-medium"
                 >
                   {saving ? "Saving..." : "Save"}
                 </button>
                 <button
                   onClick={cancelEdit}
-                  className="text-sm px-4 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-white transition-colors"
+                  className="app-button-secondary text-sm px-4 py-2"
                 >
                   Cancel
                 </button>
@@ -583,7 +623,7 @@ export default function JournalEntry() {
 
           {editing && entry.screenshots.length + newPreviews.length < 5 && (
             <label className="cursor-pointer flex items-center justify-center w-full h-16 border-2 border-dashed border-gray-700 rounded-xl hover:border-gray-500 transition-colors">
-              <p className="text-gray-500 text-sm">+ Upload more screenshots</p>
+              <p className="text-gray-500 text-sm">+ Upload or paste more screenshots</p>
               <input
                 type="file"
                 multiple

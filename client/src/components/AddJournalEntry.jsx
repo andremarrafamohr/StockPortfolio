@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import ThemeToggle from "./ThemeToggle";
 
 const INSTRUMENTS = ["ES", "NQ", "YM", "RTY", "CL", "GC", "6E", "ZB", "Other"];
 const MOODS = [
@@ -15,31 +16,31 @@ const MOODS = [
 function FormField({ label, children }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
+      <label className="app-label">{label}</label>
       {children}
     </div>
   );
 }
 
 const inputClass =
-  "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-blue-500 transition-colors";
+  "app-input text-sm";
 
 function TradeRow({ trade, index, onChange, onRemove }) {
   return (
-    <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+    <div className="app-card-soft p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-400 font-medium">Trade #{index + 1}</span>
+        <span className="text-sm text-[color:var(--app-text-muted)] font-medium">Trade #{index + 1}</span>
         <button
           type="button"
           onClick={() => onRemove(index)}
-          className="text-red-500 hover:text-red-400 text-xs font-medium"
+          className="text-red-500 hover:opacity-80 text-xs font-medium"
         >
           Remove
         </button>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Direction</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Direction</label>
           <select
             value={trade.direction}
             onChange={(e) => onChange(index, "direction", e.target.value)}
@@ -50,7 +51,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           </select>
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Contracts</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Contracts</label>
           <input
             type="number"
             min="1"
@@ -61,7 +62,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Entry Price</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Entry Price</label>
           <input
             type="number"
             step="0.25"
@@ -72,7 +73,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Exit Price</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Exit Price</label>
           <input
             type="number"
             step="0.25"
@@ -83,7 +84,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Entry Time (EST)</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Entry Time (EST)</label>
           <input
             type="time"
             value={trade.entryTime}
@@ -92,7 +93,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Exit Time (EST)</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Exit Time (EST)</label>
           <input
             type="time"
             value={trade.exitTime}
@@ -101,7 +102,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Trade P&L ($)</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Trade P&L ($)</label>
           <input
             type="number"
             step="0.01"
@@ -118,7 +119,7 @@ function TradeRow({ trade, index, onChange, onRemove }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 block mb-1">Notes</label>
+          <label className="text-xs text-[color:var(--app-text-soft)] block mb-1">Notes</label>
           <input
             type="text"
             value={trade.notes}
@@ -159,13 +160,50 @@ export default function AddJournalEntry() {
 
   const set = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
-  const handleScreenshots = (e) => {
-    const files = Array.from(e.target.files);
-    const remaining = 5 - screenshots.length;
-    const toAdd = files.slice(0, remaining);
-    setScreenshots((prev) => [...prev, ...toAdd]);
-    setPreviews((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+  const addScreenshotFiles = (files) => {
+    setScreenshots((prevScreenshots) => {
+      const remaining = 5 - prevScreenshots.length;
+      const toAdd = files.slice(0, remaining);
+
+      if (toAdd.length > 0) {
+        setPreviews((prevPreviews) => [
+          ...prevPreviews,
+          ...toAdd.map((file) => URL.createObjectURL(file)),
+        ]);
+      }
+
+      return [...prevScreenshots, ...toAdd];
+    });
   };
+
+  const handleScreenshots = (e) => {
+    addScreenshotFiles(Array.from(e.target.files));
+    e.target.value = "";
+  };
+
+  useEffect(() => {
+    const handlePaste = (event) => {
+      const pastedFiles = Array.from(event.clipboardData?.items || [])
+        .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter(Boolean);
+
+      if (pastedFiles.length === 0) return;
+
+      event.preventDefault();
+      addScreenshotFiles(pastedFiles);
+    };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, []);
+
+  useEffect(
+    () => () => {
+      previews.forEach((url) => URL.revokeObjectURL(url));
+    },
+    [previews]
+  );
 
   const removeScreenshot = (index) => {
     URL.revokeObjectURL(previews[index]);
@@ -227,17 +265,20 @@ export default function AddJournalEntry() {
   const pnlColor = pnlNum > 0 ? "text-green-400" : pnlNum < 0 ? "text-red-400" : "text-white";
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 sticky top-0 z-10">
-        <Link to="/journal" className="text-blue-500 hover:text-blue-400 text-sm">
+    <div className="app-shell text-[color:var(--app-text)]">
+      <header className="app-header px-6 py-4 sticky top-0 z-10">
+        <div className="flex items-center justify-between gap-4">
+          <Link to="/journal" className="text-[color:var(--app-primary)] hover:opacity-80 text-sm">
           ← Back to Journal
-        </Link>
-        <h1 className="text-xl font-bold text-white mt-1">Log Trading Session</h1>
+          </Link>
+          <ThemeToggle />
+        </div>
+        <h1 className="text-xl font-bold text-[color:var(--app-text)] mt-3">Log Trading Session</h1>
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-6 py-8 space-y-6 pb-12">
         {error && (
-          <div className="bg-red-950 border border-red-800 text-red-300 px-4 py-3 rounded-lg text-sm">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 px-4 py-3 text-sm">
             {error}
           </div>
         )}
@@ -249,7 +290,7 @@ export default function AddJournalEntry() {
               type="date"
               value={form.date}
               onChange={(e) => set("date", e.target.value)}
-              className={inputClass}
+              className="app-input"
               required
             />
           </FormField>
@@ -258,7 +299,7 @@ export default function AddJournalEntry() {
             <select
               value={form.instrument}
               onChange={(e) => set("instrument", e.target.value)}
-              className={inputClass}
+              className="app-input"
             >
               {INSTRUMENTS.map((i) => (
                 <option key={i} value={i}>
@@ -271,7 +312,7 @@ export default function AddJournalEntry() {
                 type="text"
                 value={form.customInstrument}
                 onChange={(e) => set("customInstrument", e.target.value)}
-                className={`${inputClass} mt-2`}
+                className="app-input mt-2"
                 placeholder="e.g. NKD, 6J, ZN..."
               />
             )}
@@ -283,7 +324,7 @@ export default function AddJournalEntry() {
               step="0.01"
               value={form.pnl}
               onChange={(e) => set("pnl", e.target.value)}
-              className={`${inputClass} text-lg font-bold ${pnlColor}`}
+              className={`app-input text-lg font-bold ${pnlColor}`}
               placeholder="0.00"
             />
           </FormField>
@@ -295,7 +336,7 @@ export default function AddJournalEntry() {
               min="0"
               value={form.riskReward}
               onChange={(e) => set("riskReward", e.target.value)}
-              className={inputClass}
+              className="app-input"
               placeholder="2.00"
             />
           </FormField>
@@ -430,10 +471,14 @@ export default function AddJournalEntry() {
             </h2>
           </div>
 
+          <p className="text-xs text-[color:var(--app-text-soft)] mb-2">
+            Tip: depois de usar PrtScr, cola aqui com Ctrl+V.
+          </p>
+
           {screenshots.length < 5 && (
-            <label className="cursor-pointer flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-700 rounded-xl hover:border-gray-500 transition-colors bg-gray-900">
-              <p className="text-gray-500 text-sm">Click to upload screenshots</p>
-              <p className="text-gray-700 text-xs mt-1">PNG, JPG, GIF, WebP · max 10 MB each</p>
+            <label className="cursor-pointer flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[color:var(--app-border)] rounded-xl hover:border-[color:var(--app-primary)]/40 transition-colors bg-[color:var(--app-surface)]">
+              <p className="text-[color:var(--app-text-muted)] text-sm">Click to upload or paste screenshots</p>
+              <p className="text-[color:var(--app-text-soft)] text-xs mt-1">PNG, JPG, GIF, WebP · max 10 MB each</p>
               <input
                 type="file"
                 multiple
@@ -449,13 +494,13 @@ export default function AddJournalEntry() {
               {previews.map((src, i) => (
                 <div
                   key={i}
-                  className="relative group rounded-lg overflow-hidden border border-gray-700 aspect-video bg-gray-800"
+                  className="relative group rounded-lg overflow-hidden border border-[color:var(--app-border)] aspect-video bg-[color:var(--app-surface-soft)]"
                 >
                   <img src={src} alt={`Screenshot ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeScreenshot(i)}
-                    className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1.5 right-1.5 bg-red-500 hover:bg-red-400 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ✕
                   </button>
@@ -470,13 +515,13 @@ export default function AddJournalEntry() {
           <button
             type="submit"
             disabled={saving}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+            className="app-button-primary flex-1 font-semibold py-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "Saving..." : "Save Session"}
           </button>
           <Link
             to="/journal"
-            className="px-8 py-3 rounded-xl border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 transition-colors text-center text-sm font-medium"
+            className="app-button-secondary px-8 py-3 text-center text-sm font-medium"
           >
             Cancel
           </Link>
