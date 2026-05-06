@@ -14,13 +14,42 @@ exports.getPortfolio = async (req, res) => {
   }
 };
 
-// Add a stock to portfolio
+// Add a stock or multiple stocks to portfolio
 exports.addStock = async (req, res) => {
   try {
-    const { symbol, quantity, purchasePrice } = req.body;
+    // Support two payload shapes:
+    // 1) { symbol, quantity, purchasePrice }
+    // 2) { stocks: [{ symbol, quantity, purchasePrice }, ...] }
+    let stocks = [];
 
-    if (!symbol || !quantity || !purchasePrice) {
+    if (Array.isArray(req.body.stocks) && req.body.stocks.length > 0) {
+      stocks = req.body.stocks;
+    } else if (req.body.symbol) {
+      stocks = [
+        {
+          symbol: req.body.symbol,
+          quantity: req.body.quantity,
+          purchasePrice: req.body.purchasePrice,
+        },
+      ];
+    }
+
+    if (!stocks.length) {
       return res.status(400).json({ message: "Please provide symbol, quantity, and purchasePrice" });
+    }
+
+    // Validate each stock entry
+    const validStocks = [];
+    for (const s of stocks) {
+      const symbol = (s.symbol || "").toString().trim();
+      const quantity = Number(s.quantity);
+      const purchasePrice = Number(s.purchasePrice);
+
+      if (!symbol || !Number.isFinite(quantity) || !Number.isFinite(purchasePrice)) {
+        return res.status(400).json({ message: "Please provide symbol, quantity, and purchasePrice" });
+      }
+
+      validStocks.push({ symbol, quantity, purchasePrice });
     }
 
     let portfolio = await Portfolio.findOne({ user: req.user._id });
@@ -29,11 +58,11 @@ exports.addStock = async (req, res) => {
       // Create new portfolio if none exists
       portfolio = new Portfolio({
         user: req.user._id,
-        stocks: [{ symbol, quantity, purchasePrice }],
+        stocks: validStocks,
       });
     } else {
-      // Add new stock
-      portfolio.stocks.push({ symbol, quantity, purchasePrice });
+      // Add new stocks
+      for (const s of validStocks) portfolio.stocks.push(s);
     }
 
     await portfolio.save();

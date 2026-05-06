@@ -6,12 +6,27 @@ const API = "http://localhost:5000/api";
 async function test() {
   try {
     // Register user
-    let res = await axios.post(`${API}/auth/register`, {
-      name: "Tester",
-      email: "tester@example.com",
-      password: "Password123!"
-    });
-    console.log("Register OK:", res.data);
+    let res;
+    try {
+      res = await axios.post(`${API}/auth/register`, {
+        name: "Tester",
+        email: "tester@example.com",
+        password: "Password123!"
+      });
+      console.log("Register OK:", res.data);
+    } catch (err) {
+      // If user already exists, try to login instead
+      if (err.response && err.response.data && /already exists/i.test(err.response.data.message)) {
+        console.log("User exists, logging in...");
+        res = await axios.post(`${API}/auth/login`, {
+          email: "tester@example.com",
+          password: "Password123!",
+        });
+        console.log("Login OK:", res.data);
+      } else {
+        throw err;
+      }
+    }
 
     const token = res.data.token;
 
